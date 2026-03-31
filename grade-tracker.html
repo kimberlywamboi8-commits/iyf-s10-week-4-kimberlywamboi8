@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Grade Tracker</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(180deg, #eff6ff, #f8fafc);
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 20px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+    }
+
+    h1 {
+      margin-top: 0;
+      text-align: center;
+      color: #0f172a;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      color: #334155;
+    }
+
+    input,
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      font-size: 16px;
+      border-radius: 10px;
+      box-sizing: border-box;
+    }
+
+    input {
+      border: 1px solid #cbd5e1;
+    }
+
+    button {
+      border: 0;
+      background: #2563eb;
+      color: #ffffff;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    #student-status {
+      margin-top: 16px;
+      font-weight: bold;
+      color: #1d4ed8;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .summary-card,
+    .student-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .summary-card p,
+    .student-card p,
+    .student-card h3 {
+      margin: 6px 0;
+    }
+
+    .summary-card span {
+      display: block;
+      font-size: 0.9rem;
+      color: #64748b;
+    }
+
+    .summary-card strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 1.3rem;
+      color: #0f172a;
+    }
+
+    #student-list {
+      display: grid;
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .empty {
+      padding: 16px;
+      border-radius: 14px;
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      color: #64748b;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Student Grade Tracker</h1>
+
+    <form id="student-form" class="form-grid">
+      <label for="student-name">
+        Student Name
+        <input id="student-name" type="text" placeholder="Enter student name">
+      </label>
+
+      <label for="student-score">
+        Score
+        <input id="student-score" type="number" min="0" max="100" placeholder="Enter score from 0 to 100">
+      </label>
+
+      <button type="submit">Add Student</button>
+    </form>
+
+    <p id="student-status">Add a student to begin tracking grades.</p>
+
+    <div class="summary">
+      <div class="summary-card">
+        <span>Total Students</span>
+        <strong id="total-students">0</strong>
+      </div>
+      <div class="summary-card">
+        <span>Class Average</span>
+        <strong id="class-average">0%</strong>
+      </div>
+      <div class="summary-card">
+        <span>Top Student</span>
+        <strong id="top-student">None yet</strong>
+      </div>
+    </div>
+
+    <div id="student-list"></div>
+  </div>
+
+  <script>
+    const studentForm = document.getElementById("student-form");
+    const studentName = document.getElementById("student-name");
+    const studentScore = document.getElementById("student-score");
+    const totalStudents = document.getElementById("total-students");
+    const classAverage = document.getElementById("class-average");
+    const topStudent = document.getElementById("top-student");
+    const studentStatus = document.getElementById("student-status");
+    const studentList = document.getElementById("student-list");
+
+    const students = [];
+
+    function getGrade(score) {
+      if (score >= 80) return "A";
+      if (score >= 70) return "B";
+      if (score >= 60) return "C";
+      if (score >= 50) return "D";
+      return "F";
+    }
+
+    function renderStudents() {
+      if (students.length === 0) {
+        totalStudents.textContent = "0";
+        classAverage.textContent = "0%";
+        topStudent.textContent = "None yet";
+        studentList.innerHTML = '<div class="empty">No students added yet.</div>';
+        return;
+      }
+
+      let total = 0;
+      let bestStudent = students[0];
+
+      for (let i = 0; i < students.length; i++) {
+        total += students[i].score;
+
+        if (students[i].score > bestStudent.score) {
+          bestStudent = students[i];
+        }
+      }
+
+      const average = total / students.length;
+
+      totalStudents.textContent = students.length;
+      classAverage.textContent = Math.round(average) + "%";
+      topStudent.textContent = bestStudent.name + " (" + bestStudent.score + "%)";
+
+      let cards = "";
+
+      for (let i = 0; i < students.length; i++) {
+        cards += `
+          <div class="student-card">
+            <h3>${students[i].name}</h3>
+            <p>Score: ${students[i].score}%</p>
+            <p>Grade: ${students[i].grade}</p>
+            <p>Status: ${students[i].score >= 50 ? "Pass" : "Fail"}</p>
+          </div>
+        `;
+      }
+
+      studentList.innerHTML = cards;
+    }
+
+    studentForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      const name = studentName.value.trim();
+      const score = Number(studentScore.value);
+
+      if (name === "") {
+        studentStatus.textContent = "Please enter the student name.";
+        return;
+      }
+
+      if (Number.isNaN(score) || score < 0 || score > 100) {
+        studentStatus.textContent = "Please enter a valid score between 0 and 100.";
+        return;
+      }
+
+      const student = {
+        name: name,
+        score: score,
+        grade: getGrade(score)
+      };
+
+      students.push(student);
+      studentStatus.textContent = name + " added successfully with grade " + student.grade + ".";
+
+      studentForm.reset();
+      renderStudents();
+    });
+
+    renderStudents();
+  </script>
+</body>
+</html>
+
+

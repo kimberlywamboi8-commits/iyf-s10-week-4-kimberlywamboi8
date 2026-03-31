@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Actual Calculator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(180deg, #dbeafe, #f8fafc);
+      padding: 24px;
+    }
+
+    .calculator {
+      width: min(100%, 360px);
+      background: #111827;
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+    }
+
+    .title {
+      margin: 0 0 12px;
+      color: #e5e7eb;
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .display {
+      width: 100%;
+      min-height: 88px;
+      border: 0;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      padding: 16px;
+      background: #1f2937;
+      color: #f9fafb;
+      font-size: 2.2rem;
+      text-align: right;
+    }
+
+    .keys {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 16px;
+      padding: 18px 12px;
+      font-size: 1.15rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .number,
+    .decimal {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .operator {
+      background: #f59e0b;
+      color: #ffffff;
+    }
+
+    .action {
+      background: #ef4444;
+      color: #ffffff;
+    }
+
+    .equals {
+      background: #10b981;
+      color: #ffffff;
+      grid-column: span 2;
+    }
+
+    .zero {
+      grid-column: span 2;
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <h1 class="title">Calculator</h1>
+    <input id="display" class="display" type="text" value="0" readonly>
+
+    <div class="keys">
+      <button class="action" data-action="clear">AC</button>
+      <button class="action" data-action="delete">DEL</button>
+      <button class="operator" data-value="%">%</button>
+      <button class="operator" data-value="/">/</button>
+
+      <button class="number" data-value="7">7</button>
+      <button class="number" data-value="8">8</button>
+      <button class="number" data-value="9">9</button>
+      <button class="operator" data-value="*">*</button>
+
+      <button class="number" data-value="4">4</button>
+      <button class="number" data-value="5">5</button>
+      <button class="number" data-value="6">6</button>
+      <button class="operator" data-value="-">-</button>
+
+      <button class="number" data-value="1">1</button>
+      <button class="number" data-value="2">2</button>
+      <button class="number" data-value="3">3</button>
+      <button class="operator" data-value="+">+</button>
+
+      <button class="number zero" data-value="0">0</button>
+      <button class="decimal" data-value=".">.</button>
+      <button class="equals" data-action="calculate">=</button>
+    </div>
+  </div>
+
+  <script>
+    const display = document.getElementById("display");
+    const keys = document.querySelector(".keys");
+
+    function updateDisplay(value) {
+      display.value = value || "0";
+    }
+
+    function appendValue(value) {
+      if (display.value === "0" && value !== ".") {
+        updateDisplay(value);
+        return;
+      }
+
+      const lastNumber = display.value.split(/[\+\-\*\/%]/).pop();
+      if (value === "." && lastNumber.includes(".")) {
+        return;
+      }
+
+      updateDisplay(display.value + value);
+    }
+
+    function appendOperator(operator) {
+      const current = display.value;
+      const lastChar = current.slice(-1);
+
+      if ("+-*/%".includes(lastChar)) {
+        updateDisplay(current.slice(0, -1) + operator);
+        return;
+      }
+
+      updateDisplay(current + operator);
+    }
+
+    function clearDisplay() {
+      updateDisplay("0");
+    }
+
+    function deleteLast() {
+      if (display.value.length <= 1 || display.value === "Error") {
+        clearDisplay();
+        return;
+      }
+
+      updateDisplay(display.value.slice(0, -1));
+    }
+
+    function calculate() {
+      try {
+        const expression = display.value.replace(/%/g, "/100");
+        const result = Function('"use strict"; return (' + expression + ")")();
+
+        if (!Number.isFinite(result)) {
+          throw new Error("Invalid");
+        }
+
+        updateDisplay(String(result));
+      } catch (error) {
+        updateDisplay("Error");
+      }
+    }
+
+    keys.addEventListener("click", function (event) {
+      const button = event.target.closest("button");
+      if (!button) {
+        return;
+      }
+
+      const value = button.dataset.value;
+      const action = button.dataset.action;
+
+      if (action === "clear") {
+        clearDisplay();
+        return;
+      }
+
+      if (action === "delete") {
+        deleteLast();
+        return;
+      }
+
+      if (action === "calculate") {
+        calculate();
+        return;
+      }
+
+      if ("+-*/%".includes(value)) {
+        appendOperator(value);
+        return;
+      }
+
+      appendValue(value);
+    });
+  </script>
+</body>
+</html>
+
